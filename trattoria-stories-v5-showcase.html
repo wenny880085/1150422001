@@ -371,6 +371,58 @@
       font-weight:800;
     }
     .cert-box small{display:block;font-weight:400;color:#7d5d3d}
+    .tutorial-panel{
+      margin-bottom:10px;
+      background:linear-gradient(135deg,#fff8e9,#fff2d4);
+      border-color:#d8a243;
+    }
+    .tutorial-list{
+      list-style:none;
+      padding:0;
+      margin:10px 0 0;
+      display:grid;
+      gap:8px;
+    }
+    .tutorial-list li{
+      padding:8px 10px;
+      border-radius:10px;
+      background:#fffdf7;
+      border:1px solid #ead0aa;
+      color:#6e4c2c;
+      font-size:13px;
+      line-height:1.45;
+    }
+    .tutorial-list li.active{
+      border-color:#a94f19;
+      background:#fff1d6;
+      box-shadow:inset 0 0 0 1px rgba(169,79,25,.12);
+    }
+    .tutorial-badge{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      background:#a94f19;
+      color:white;
+      font-size:12px;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+    .tutorial-tip{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:#fff3d8;
+      border:1px dashed #d8a243;
+      color:#6b3a1f;
+      font-weight:700;
+    }
+    .tutorial-actions{
+      display:flex;
+      justify-content:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
     .toast{
       position:fixed;
       right:18px;
@@ -422,6 +474,7 @@
       <button class="navbtn" :class="{active:tab==='decor'}" @click="tab='decor'">🪑 裝潢</button>
       <button class="navbtn" :class="{active:tab==='score'}" @click="tab='score'">⭐ 評分</button>
       <button class="navbtn" :class="{active:tab==='goal'}" @click="tab='goal'">🏆 目標</button>
+      <button class="navbtn" @click="startTutorial">📘 教學</button>
       <button class="navbtn" @click="resetGame">🔄 重來</button>
     </div>
 
@@ -564,6 +617,19 @@
         </template>
       </div>
 
+      <div class="panel tutorial-panel">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="margin:0;font-size:18px">📘 新手教學</h2>
+          <button class="btn3" @click="startTutorial">重新查看</button>
+        </div>
+        <ol class="tutorial-list">
+          <li v-for="(step,index) in tutorial.steps" :key="index" :class="{active:tutorial.active && tutorial.step===index}">
+            <strong>{{ index + 1 }}. {{ step.title }}</strong>
+            <div>{{ step.tip }}</div>
+          </li>
+        </ol>
+      </div>
+
       <div class="panel">
         <h2 style="margin:0 0 8px;font-size:18px">📜 遊戲訊息</h2>
         <div class="log">
@@ -626,6 +692,20 @@
           <div class="cert-box">{{ restaurant.michelinStars }}/6<small>米其林星級</small></div>
           <div class="cert-box">明星餐廳<small>最終稱號</small></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" v-if="tutorial.active">
+    <div class="modal">
+      <div class="tutorial-badge">新手教學 {{ tutorial.step + 1 }}/{{ tutorial.steps.length }}</div>
+      <h2>📘 {{ tutorial.steps[tutorial.step].title }}</h2>
+      <p>{{ tutorial.steps[tutorial.step].body }}</p>
+      <div class="tutorial-tip">💡 {{ tutorial.steps[tutorial.step].tip }}</div>
+      <div class="tutorial-actions">
+        <button class="btn3" @click="prevTutorialStep" :disabled="tutorial.step === 0">上一步</button>
+        <button class="btn2" @click="nextTutorialStep">{{ tutorial.step === tutorial.steps.length - 1 ? '完成教學' : '下一步' }}</button>
+        <button class="danger" @click="completeTutorial">跳過教學</button>
       </div>
     </div>
   </div>
@@ -700,7 +780,21 @@ createApp({
         {id:3, icon:'💡', name:'吊燈', buyCost:180, level:0, owned:false, description:'提升燈光氣氛。'},
         {id:4, icon:'🍽️', name:'餐具', buyCost:140, level:0, owned:false, description:'提升用餐精緻度。'}
       ],
-      logs:['歡迎開店！目前沒有廚師、沒有服務員。可以先靠清炒、甜點、紅酒飲料賺錢。']
+      logs:['歡迎開店！目前沒有廚師、沒有服務員。可以先靠清炒、甜點、紅酒飲料賺錢。'],
+      tutorial:{
+        active:false,
+        step:0,
+        completed:false,
+        steps:[
+          {title:'開始經營餐廳', body:'你即將成為一名餐廳經營者，目標是把小餐館一步一步發展成 Michelin 六星餐廳。', tip:'先從最簡單的料理開始，累積金幣與經驗。'},
+          {title:'接單賺錢', body:'到「菜單」頁面，先點擊可接單的料理，讓餐廳開始有收入。', tip:'建議先從「清炒義大利麵」開始。'},
+          {title:'觀察三項評分', body:'每次接單都會影響氛圍、餐點與服務三項評分，這些會決定後續升星。', tip:'上方狀態欄與右下訊息可以隨時查看最新進度。'},
+          {title:'聘請廚師與服務員', body:'擁有廚師與服務員後，餐點品質與服務體驗會更穩定。', tip:'到「員工」頁面聘請或升級。'},
+          {title:'購買裝潢提升氣氛', body:'裝潢會提升餐廳氛圍，讓你的餐廳更有質感。', tip:'到「裝潢」頁面購買桌椅、灶台、吊燈與餐具。'},
+          {title:'迎戰美食評家', body:'當三項評分達到門檻時，美食評家會來挑戰，通過後才能升星。', tip:'創意料理挑戰成功，才會真正邁向下一顆星。'},
+          {title:'邁向六星目標', body:'持續經營、提升員工與裝潢，最終達成 Michelin ★★★★★★。', tip:'你隨時可以重新開啟這份教學。'}
+        ]
+      }
     }
   },
   computed:{
@@ -716,6 +810,7 @@ createApp({
       this.isLogin=true;
       this.restaurant.name = this.username + "'s Pasta";
       this.logs.unshift('玩家 '+this.username+' 登入成功，開始經營餐廳！');
+      this.startTutorial();
     },
     scoreWidth(v){ return Math.min(100, v); },
     cook(menu){
@@ -889,6 +984,32 @@ createApp({
       this.selectedIngredients = [];
       this.logs.unshift('❌ 創意料理失敗，美食評家不滿意，三項評分各倒扣一半。');
       this.showToast('挑戰失敗，評分倒扣一半');
+    },
+    startTutorial(){
+      this.tutorial.active = true;
+      this.tutorial.step = 0;
+      this.tutorial.completed = false;
+      this.tab = 'menu';
+      this.showToast('新手教學已開啟');
+    },
+    nextTutorialStep(){
+      if(this.tutorial.step < this.tutorial.steps.length - 1){
+        this.tutorial.step += 1;
+        this.tab = ['menu','menu','score','staff','decor','goal','menu'][this.tutorial.step];
+      }else{
+        this.completeTutorial();
+      }
+    },
+    prevTutorialStep(){
+      if(this.tutorial.step > 0){
+        this.tutorial.step -= 1;
+        this.tab = ['menu','menu','score','staff','decor','goal','menu'][this.tutorial.step];
+      }
+    },
+    completeTutorial(){
+      this.tutorial.active = false;
+      this.tutorial.completed = true;
+      this.showToast('教學完成，現在可以正式開始經營！');
     },
     resetGame(){ location.reload(); },
     showToast(msg){ this.toast=msg; setTimeout(()=>this.toast='',1800); }
